@@ -1,1 +1,1 @@
-# Maze-Generator-and-Dijkstra-Solver
+# Maze-Generator-and-BFS-Solver
