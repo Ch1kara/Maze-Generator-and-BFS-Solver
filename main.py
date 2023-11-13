@@ -1,11 +1,11 @@
-from heapq import heapify, heappop, heappush
 import pygame as pg
-from pygame.locals import *
 import sys
 from random import choice
-from collections import defaultdict
 from collections import deque
-import time
+
+# STUFF I WAS GOING TO USE FOR DIJKSTRA's
+from heapq import heapify, heappop, heappush
+from collections import defaultdict
 
 # screen size and title at the top
 screen_width = 1403
@@ -15,7 +15,7 @@ pg.display.set_caption("Maze and Dijkstra's")
 
 pg.init()
 clock = pg.time.Clock()
-sq_size = 200
+sq_size = 100  # HOW YOU CHANGE THE MAZE SIZE(MAKE SURE IT'S A MULTIPLE OF BOTH THE SCREEN WIDTH AND HEIGHT)
 cols, rows = screen_width // sq_size, screen_height // sq_size  # making a (col, row) grid out of entire screen
 
 
@@ -220,11 +220,11 @@ class Node:
 
         return self.neighbors
 
-    def change_color(self):
+    def change_color(self, color):
         """Used for changing the color of final path, modular given removed sides in maze"""
         # square is defined by top left corner
         x, y = self.x * sq_size, self.y * sq_size  # scaling the locations on screen
-        pg.draw.rect(screen, pg.Color('turquoise'), (x, y, sq_size, sq_size))
+        pg.draw.rect(screen, pg.Color(color), (x, y, sq_size, sq_size))
 
         if self.l_border:
             pg.draw.line(screen, pg.Color('white'), (x, y + sq_size), (x, y), 3)
@@ -240,6 +240,10 @@ status = 'norm'
 graph = [Node(j, i) for i in range(rows) for j in range(cols)]  # columns go before rows for some reason
 current_n = graph[0]  # arbitrary start point for drawing the maze
 stack = []  # STACK FOR DFS
+maze_graph = {}  # USED FOR FINAL PATH AND GENERAL MAZE
+start = ''
+end = ''
+chosen = False  # used so that only one start and end are chosen for the paths
 
 while status != 'quit':
     for event in pg.event.get():
@@ -258,6 +262,8 @@ while status != 'quit':
                     status = 'quit'
 
         if event.type == pg.KEYDOWN:
+            if event.key == pg.K_r:
+                status = 'reveal'
             if event.key == pg.K_SPACE:
                 status = 'solving'
 
@@ -283,8 +289,7 @@ while status != 'quit':
         elif stack:
             current_n = stack.pop()  # start the "DFS" again once the prior loop reaches a dead end
 
-    if status == 'solving':
-        maze_graph = {}
+    if status == 'reveal': # REVEALS A RANDOMLY CHOSEN START AND END FOR THE MAZE
         for node in graph:
             neighbors = node.find_connected()
             # print(f"{node.node}:{neighbors}") # DEBUGGING STUFF
@@ -292,12 +297,24 @@ while status != 'quit':
             #
             # print("NEIGHBORS:" + str(neighbors))
             maze_graph[node] = neighbors
-        start = list(maze_graph.keys())[0]
-        end = list(maze_graph.keys())[-1]
+        if not chosen:
+            start = choice(list(maze_graph.keys()))
+            end = choice(list(maze_graph.keys()))
+            start.change_color('purple1')
+            end.change_color('purple1')
+            if start == end:  # SHOULD PICK A NEW START AND END IF THEY ARE THE SAME
+                continue
+        chosen = True
+
+    if status == 'solving':
+
         paths = BFS_maze(maze_graph, start, end)
         final_path = patch_path_together(paths, start, end)
         for node in final_path:
-            node.change_color()
+            node.change_color('turquoise')
+
+        final_path[0].change_color('purple1')  # HIGHLIGHT START AND END
+        final_path[-1].change_color('purple1')
 
         status = 'solved'
 
