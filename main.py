@@ -243,7 +243,7 @@ stack = []  # STACK FOR DFS
 maze_graph = {}  # USED FOR FINAL PATH AND GENERAL MAZE
 start = ''
 end = ''
-chosen = False  # used so that only one start and end are chosen for the paths
+chosen = False  # used for choosing the start and end points for the maze
 
 while status != 'quit':
     for event in pg.event.get():
@@ -264,8 +264,18 @@ while status != 'quit':
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_r:
                 status = 'reveal'
+
             if event.key == pg.K_SPACE:
                 status = 'solving'
+
+        if status == 'reveal':
+            if type(start) == str or type(end) == str:
+                break
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_r:  # if you press r again then you will generate a new start and end
+                    start.change_color('violetred1')  # change the colors back to the maze color
+                    end.change_color('violetred1')
+                    chosen = False
 
     if status == 'norm':
         quit_b = create_button(610, 100, 180, 100, 60, "quit")
